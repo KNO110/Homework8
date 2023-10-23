@@ -1,0 +1,413 @@
+////МИНУТОЧКУ ВНИМАНИЯ!!!!!!!!!!!
+//// В моей проге сейв идёт автоматом при выборе в менб (6), (не при выходе через галочку!), поэтому добавьте дивайсы а потом нажмите 6 для выхода, потом закрывайте. После этого при повтороном открытии программы, данные сами загрузятся с момента прошлого выхода!
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+
+abstract class Storage
+{
+    public string Name { get; set; }
+    public string Manufacturer { get; set; }
+    public string Model { get; set; }
+    public int Quantity { get; set; }
+    public double Price { get; set; }
+
+    public Storage(string name, string manufacturer, string model, int quantity, double price)
+    {
+        Name = name;
+        Manufacturer = manufacturer;
+        Model = model;
+        Quantity = quantity;
+        Price = price;
+    }
+
+    public abstract void Print();
+    public abstract void Load(string[] data);
+    public abstract string[] Save();
+}
+
+class FlashMemory : Storage
+{
+    public int MemorySize { get; set; }
+    public int USBSpeed { get; set; }
+
+    public FlashMemory(string name, string manufacturer, string model, int quantity, double price, int memorySize, int usbSpeed)
+        : base(name, manufacturer, model, quantity, price)
+    {
+        MemorySize = memorySize;
+        USBSpeed = usbSpeed;
+    }
+
+    public override void Print()
+    {
+        Console.WriteLine($"Flash Memory: {Name} ({Manufacturer} {Model})");
+        Console.WriteLine($"Memory Size: {MemorySize}GB, USB Speed: {USBSpeed} Mbps");
+        Console.WriteLine($"Quantity: {Quantity}, Price: ${Price}\n");
+    }
+
+    public override void Load(string[] data)            ///Забираем данные
+    {
+        Name = data[0];
+        Manufacturer = data[1];
+        Model = data[2];
+        Quantity = int.Parse(data[3]);
+        Price = double.Parse(data[4]);
+        MemorySize = int.Parse(data[5]);
+        USBSpeed = int.Parse(data[6]);
+    }
+
+    public override string[] Save()
+    {
+        return new string[] { Name, Manufacturer, Model, Quantity.ToString(), Price.ToString(), MemorySize.ToString(), USBSpeed.ToString() };
+    }
+}
+
+class DVDDisk : Storage
+{
+    public int ReadSpeed { get; set; }
+    public int WriteSpeed { get; set; }
+
+    public DVDDisk(string name, string manufacturer, string model, int quantity, double price, int readSpeed, int writeSpeed)
+        : base(name, manufacturer, model, quantity, price)
+    {
+        ReadSpeed = readSpeed;
+        WriteSpeed = writeSpeed;
+    }
+
+    public override void Print()
+    {
+        Console.WriteLine($"DVD Disk: {Name} ({Manufacturer} {Model})");
+        Console.WriteLine($"Read Speed: {ReadSpeed}x, Write Speed: {WriteSpeed}x");
+        Console.WriteLine($"Quantity: {Quantity}, Price: ${Price}\n");
+    }
+
+    public override void Load(string[] data)
+    {
+        Name = data[0];
+        Manufacturer = data[1];
+        Model = data[2];
+        Quantity = int.Parse(data[3]);
+        Price = double.Parse(data[4]);
+        ReadSpeed = int.Parse(data[5]);
+        WriteSpeed = int.Parse(data[6]);
+    }
+
+    public override string[] Save()
+    {
+        return new string[] { Name, Manufacturer, Model, Quantity.ToString(), Price.ToString(), ReadSpeed.ToString(), WriteSpeed.ToString() };
+    }
+}
+
+class RemovableHDD : Storage
+{
+    public int DiskSize { get; set; }
+    public int USBSpeed { get; set; }
+
+    public RemovableHDD(string name, string manufacturer, string model, int quantity, double price, int diskSize, int usbSpeed)
+        : base(name, manufacturer, model, quantity, price)
+    {
+        DiskSize = diskSize;
+        USBSpeed = usbSpeed;
+    }
+
+    public override void Print()
+    {
+        Console.WriteLine($"Removable HDD: {Name} ({Manufacturer} {Model})");
+        Console.WriteLine($"Disk Size: {DiskSize}GB, USB Speed: {USBSpeed} Mbps");
+        Console.WriteLine($"Quantity: {Quantity}, Price: ${Price}\n");
+    }
+
+    public override void Load(string[] data)
+    {
+        Name = data[0];
+        Manufacturer = data[1];
+        Model = data[2];
+        Quantity = int.Parse(data[3]);
+        Price = double.Parse(data[4]);
+        DiskSize = int.Parse(data[5]);
+        USBSpeed = int.Parse(data[6]);
+    }
+
+    public override string[] Save()
+    {
+        return new string[] { Name, Manufacturer, Model, Quantity.ToString(), Price.ToString(), DiskSize.ToString(), USBSpeed.ToString() };
+    }
+}
+
+class Program
+{
+    static List<Storage> storageList = new List<Storage>();
+    static string filename = "storage.txt";
+
+    static void Main(string[] args)
+    {
+        LoadData();                         /////ВНИМАНИЕ, загрузка данных с файла идёт автоматом при запуске
+
+        while (true)
+        {
+            Console.WriteLine("Прайс-лист носителей информации");
+            Console.WriteLine("1. Добавить носитель информации");
+            Console.WriteLine("2. Удалить носитель информации");
+            Console.WriteLine("3. Печать списка");
+            Console.WriteLine("4. Изменить параметры носителя информации");
+            Console.WriteLine("5. Поиск носителя информации");
+            Console.WriteLine("6. Выход");
+            Console.Write("Выберите действие (1-6): ");
+
+            if (int.TryParse(Console.ReadLine(), out int choice))
+            {
+                switch (choice)
+                {
+                    case 1:
+                        AddStorageDevice();
+                        break;
+                    case 2:
+                        RemoveStorageDevice();
+                        break;
+                    case 3:
+                        PrintStorage();
+                        break;
+                    case 4:
+                        UpdateStorageDevice();
+                        break;
+                    case 5:
+                        SearchInStorage();
+                        break;
+                    case 6:
+                        SaveData();             //////// Данные сохряняются при выходе, ибо мне было в падлу делать отдельную функцию, но давайте спишем на то что всё для людей, и типо автоматом легче)))
+                        Environment.Exit(0);
+                        break;
+                    default:
+                        Console.WriteLine("Неверный выбор. Попробуйте снова.");
+                        break;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Неверный выбор. Попробуйте снова.");
+            }
+        }
+    }
+
+    static void AddStorageDevice()
+    {
+        Console.WriteLine("Выберите тип носителя информации:");
+        Console.WriteLine("1. Flash-память");
+        Console.WriteLine("2. DVD-диск");
+        Console.WriteLine("3. Съемный HDD");
+        Console.Write("Введите тип носителя от 1-3 : ");
+
+        if (int.TryParse(Console.ReadLine(), out int typeChoice))
+        {
+            Console.Write("Введите название: ");
+            string name = Console.ReadLine();
+            Console.Write("Введите производителя: ");
+            string manufacturer = Console.ReadLine();
+            Console.Write("Введите модель: ");
+            string model = Console.ReadLine();
+            Console.Write("Введите количество: ");
+            int quantity = int.Parse(Console.ReadLine());
+            Console.Write("Введите цену(можно даром): ");
+            double price = double.Parse(Console.ReadLine());
+
+            switch (typeChoice)
+            {
+                case 1:
+                    Console.Write("Введите объем памяти (в GB): ");
+                    int memorySize = int.Parse(Console.ReadLine());
+                    Console.Write("Введите скорость USB (в Mbps): ");
+                    int usbSpeeed = int.Parse(Console.ReadLine());
+                    storageList.Add(new FlashMemory(name, manufacturer, model, quantity, price, memorySize, usbSpeeed));
+                    Console.WriteLine("Flash-память добавлена в список.");
+                    break;
+                case 2:
+                    Console.Write("Введите скорость чтения: ");
+                    int readSpeed = int.Parse(Console.ReadLine());
+                    Console.Write("Введите скорость записи: ");
+                    int writeSpeed = int.Parse(Console.ReadLine());
+                    storageList.Add(new DVDDisk(name, manufacturer, model, quantity, price, readSpeed, writeSpeed));
+                    Console.WriteLine("DVD-диск добавлен в список.");
+                    break;
+                case 3:
+                    Console.Write("Введите размер диска (в GB): ");
+                    int diskSize = int.Parse(Console.ReadLine());
+                    Console.Write("Введите скорость USB (в Mbps): ");
+                    int hddUSBSpeed = int.Parse(Console.ReadLine());
+                    storageList.Add(new RemovableHDD(name, manufacturer, model, quantity, price, diskSize, hddUSBSpeed));
+                    Console.WriteLine("Съемный HDD добавлен в список.");
+                    break;
+                default:
+                    Console.WriteLine("Неверный выбор. Носитель информации не добавлен:(");
+                    break;
+            }
+        }
+        else
+        {
+            Console.WriteLine("Неверный выбор. Носитель информации не добавлен. капец");
+        }
+    }
+
+    static void RemoveStorageDevice()
+    {
+        Console.Write("Введите имя носителя информации для удаления: ");
+        string name = Console.ReadLine();
+
+        var deviceToRemove = storageList.Find(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+        if (deviceToRemove != null)
+        {
+            storageList.Remove(deviceToRemove);
+            Console.WriteLine($"Носитель информации '{name}' удален из списка.");
+        }
+        else
+        {
+            Console.WriteLine($"Носитель информации с именем '{name}' не найден в списке.");
+        }
+    }
+
+    static void PrintStorage()
+    {
+        Console.WriteLine("Список носителей информации:");
+        foreach (var storageDevice in storageList)
+        {
+            storageDevice.Print();
+        }
+    }
+
+    static void UpdateStorageDevice()
+    {
+        Console.Write("Введите имя носителя информации для изменения: ");
+        string name = Console.ReadLine();
+
+        var deviceToUpdate = storageList.Find(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+        if (deviceToUpdate != null)
+        {
+            Console.WriteLine("Выберите параметр для изменения:");
+            Console.WriteLine("1. Наименование");
+            Console.WriteLine("2. Производитель");
+            Console.WriteLine("3. Модель");
+            Console.WriteLine("4. Количество");
+            Console.WriteLine("5. Цена");
+
+            if (int.TryParse(Console.ReadLine(), out int updateChoice))
+            {
+                Console.Write("Введите новое значение: ");
+                string newValue = Console.ReadLine();
+
+                switch (updateChoice)
+                {
+                    case 1:
+                        deviceToUpdate.Name = newValue;
+                        break;
+                    case 2:
+                        deviceToUpdate.Manufacturer = newValue;
+                        break;
+                    case 3:
+                        deviceToUpdate.Model = newValue;
+                        break;
+                    case 4:
+                        deviceToUpdate.Quantity = int.Parse(newValue);
+                        break;
+                    case 5:
+                        deviceToUpdate.Price = double.Parse(newValue);
+                        break;
+                    default:
+                        Console.WriteLine("Неверный выбор. Параметр не изменен.");
+                        break;
+                }
+
+                Console.WriteLine($"Параметр носителя информации '{name}' изменен.");
+            }
+            else
+            {
+                Console.WriteLine("Неверный выбор. Параметр не изменен.");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Носитель информации с именем '{name}' не найден в списке.");
+        }
+    }
+
+    static void SearchInStorage()
+    {
+        Console.Write("Введите имя носителя информации для поиска: ");
+        string name = Console.ReadLine();
+
+        var foundDevices = storageList.FindAll(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+        if (foundDevices.Count > 0)
+        {
+            Console.WriteLine("Найденные носители информации:");
+            foreach (var storageDevice in foundDevices)
+            {
+                storageDevice.Print();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Носитель информации с именем '{name}' не найден в списке.");
+        }
+    }
+
+    static void LoadData()
+    {
+        if (File.Exists(filename))
+        {
+            using (FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+            using (StreamReader reader = new StreamReader(fileStream))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    string[] data = line.Split('|');
+                    if (data.Length >= 7)
+                    {
+                        string type = data[0];
+                        string[] deviceData = data[1..];
+
+                        switch (type)
+                        {
+                            case "FlashMemory":
+                                var flashMemory = new FlashMemory("", "", "", 0, 0, 0, 0);
+                                flashMemory.Load(deviceData);
+                                storageList.Add(flashMemory);
+                                break;
+                            case "DVDDisk":
+                                var dvdDisk = new DVDDisk("", "", "", 0, 0, 0, 0);
+                                dvdDisk.Load(deviceData);
+                                storageList.Add(dvdDisk);
+                                break;
+                            case "RemovableHDD":
+                                var removableHDD = new RemovableHDD("", "", "", 0, 0, 0, 0);
+                                removableHDD.Load(deviceData);
+                                storageList.Add(removableHDD);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    static void SaveData()
+    {
+        using (FileStream fileStream = new FileStream(filename, FileMode.Create, FileAccess.Write))
+        using (StreamWriter writer = new StreamWriter(fileStream))
+        {
+            foreach (var storageDevice in storageList)
+            {
+                string type = storageDevice.GetType().Name;
+                string[] deviceData = storageDevice.Save();
+                string line = $"{type}|{string.Join("|", deviceData)}";
+                writer.WriteLine(line);
+            }
+        }
+    }
+}
